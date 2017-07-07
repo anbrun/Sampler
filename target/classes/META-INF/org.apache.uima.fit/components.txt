@@ -1,1 +1,0 @@
-classpath*:de\idsma\rw\Sampler\Sampler.xml
