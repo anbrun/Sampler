@@ -70,12 +70,12 @@ public class Runner {
 			// Typesystem for sampler (merge from generated TS, MiKalliTS und RWProjekt)
 						TypeSystemDescription tsdSampler = TypeSystemDescriptionFactory
 								.createTypeSystemDescriptionFromPath("resources/RWProjektTypeSystem.xml");
-						//TypeSystemDescription tsdMiKalli = TypeSystemDescriptionFactory
-						//		.createTypeSystemDescriptionFromPath("resources/MiKalliTypesystem.xml");
+						TypeSystemDescription tsdMiKalli = TypeSystemDescriptionFactory
+								.createTypeSystemDescriptionFromPath("resources/MiKalliTypesystem.xml");
 						Collection<TypeSystemDescription> ts_coll = new HashSet<>();
 						ts_coll.add(tsd);
 						ts_coll.add(tsdSampler);
-						//ts_coll.add(tsdMiKalli);
+						ts_coll.add(tsdMiKalli);
 
 						TypeSystemDescription mergedTypeSystems = null;
 						mergedTypeSystems = CasCreationUtils.mergeTypeSystems(ts_coll);
@@ -85,27 +85,30 @@ public class Runner {
 					SamplerXmi.class,
 					//SamplerXmi.PARAM_TS, mergedTypeSystems,
 					SamplerXmi.PARAM_SAMPLELEN, 500,
-					SamplerXmi.PARAM_SAMPLENR, 1, 
+					SamplerXmi.PARAM_SAMPLENR, 5, 
 					SamplerXmi.PARAM_OUTPUTDIR, "samples");
 			
 
 			// set TypeSystem for Sampler
 			sampler.getAnalysisEngineMetaData().setTypeSystem(mergedTypeSystems);
 
-			// AnalysisEngineDescription xmiWriter = createEngineDescription(
-			// XmiWriter.class, XmiWriter.PARAM_TARGET_LOCATION, "target");
-			// xmiWriter.getAnalysisEngineMetaData().setTypeSystem(mergedTypeSystems);
-
-			// runPipeline(cr, seg, sampler, xmiWriter);
+//			 AnalysisEngineDescription xmiWriter = createEngineDescription(
+//			 XmiWriter.class, XmiWriter.PARAM_TARGET_LOCATION, "target");
+//			 xmiWriter.getAnalysisEngineMetaData().setTypeSystem(mergedTypeSystems);
+//
+//			 runPipeline(cr, seg, sampler, xmiWriter);
 
 			JCasIterable iteratePipeline = SimplePipeline.iteratePipeline(cr, seg, sampler);
 			JCasIterator iterator = iteratePipeline.iterator();
 
 			CAS cas = null;
+			int counter = 0;
 			while (iterator.hasNext()) {
 				cas = iterator.next().getCas();
+				XmiCasSerializer.serialize(cas, new FileOutputStream(new File("out" + counter + "_.xmi")));
+				counter++;
 			}
-			XmiCasSerializer.serialize(cas, new FileOutputStream(new File("out.xmi")));
+			
 
 			// runPipeline(cr, seg, tagger, rfTagger, markSTWWords,
 			// markIndirect, xmiWriter);
