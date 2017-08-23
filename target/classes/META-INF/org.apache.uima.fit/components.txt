@@ -1,0 +1,2 @@
+classpath*:de\idsma\rw\Sampler\Sampler.xml
+classpath*:de\idsma\rw\Sampler\SamplerXmi.xml
