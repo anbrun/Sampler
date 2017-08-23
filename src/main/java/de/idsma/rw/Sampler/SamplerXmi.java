@@ -45,31 +45,30 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 	public static final String PARAM_OUTPUTDIR = "Output directcory for samples";
 	@ConfigurationParameter(name = PARAM_OUTPUTDIR, defaultValue = "samples", description = "Output directcory for samples")
 	private String outputdir;
-	
-//	public static final TypeSystemDescription PARAM_TS = null;
-//	@ConfigurationParameter(name = PARAM_OUTPUTDIR, description = "Typesystem for output files")
-//	private TypeSystemDescription outputTS;
-	
+
+	// public static final TypeSystemDescription PARAM_TS = null;
+	// @ConfigurationParameter(name = PARAM_OUTPUTDIR, description = "Typesystem
+	// for output files")
+	// private TypeSystemDescription outputTS;
+
 	private Random randomGenerator = new Random();
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 
 		// select all sentence annotations inside tag body
-	    String typeName = "de.uniwue.mk.kallimachos.tei.type.body";
-	    Type bodyType = aJCas.getTypeSystem().getType(typeName);
-	    AnnotationIndex<Annotation> bodyIndex = aJCas.getAnnotationIndex(bodyType);
-	    List<Sentence> sentInBody = new ArrayList<>();
-	    for (Annotation body : bodyIndex) {
-	    	sentInBody = JCasUtil.selectCovered(aJCas, Sentence.class, body);
-	    }
+		String typeName = "de.uniwue.mk.kallimachos.tei.type.body";
+		Type bodyType = aJCas.getTypeSystem().getType(typeName);
+		AnnotationIndex<Annotation> bodyIndex = aJCas.getAnnotationIndex(bodyType);
+		List<Sentence> sentInBody = new ArrayList<>();
+		for (Annotation body : bodyIndex) {
+			sentInBody = JCasUtil.selectCovered(aJCas, Sentence.class, body);
+		}
 		System.out.println("sentInBody: " + sentInBody.size());
-	    
-	    //choose Sample
-	   
-	    
-		Map<Sentence, Collection<Token>> sentsWithToks = JCasUtil.indexCovered(
-				aJCas, Sentence.class, Token.class);
+
+		// choose Sample
+
+		Map<Sentence, Collection<Token>> sentsWithToks = JCasUtil.indexCovered(aJCas, Sentence.class, Token.class);
 
 		// TEST
 		// AnnotationIndex<Annotation> idx = aJCas.getAnnotationIndex();
@@ -82,8 +81,8 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 			System.out.println("Find sample: Try " + tries);
 			if (tries > this.samplenr + TRYLIMIT) {
 				Object[] params = new Object[0];
-				//throw new AnalysisEngineProcessException("Too many tries: "
-				//		+ tries, params);
+				// throw new AnalysisEngineProcessException("Too many tries: "
+				// + tries, params);
 				System.err.println("Too many tries: " + tries);
 				break;
 			}
@@ -95,56 +94,67 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 		}
 
 		try {
-			Iterator<Token> toks = JCasUtil.iterator(aJCas, Token.class);
-			String docStart = new String();
-			int counter = 0;
-			while (counter < 5 && toks.hasNext()) {
-				docStart = docStart + toks.next().getCoveredText();
-				counter++;
+			// get the name for the sample doc: erz_12
+			// get the f-Annotation with feature ID
+			String filename = "samp";
+			Type fAnnoType = aJCas.getTypeSystem().getType("de.uniwue.mk.kallimachos.tei.type.f");
+			AnnotationIndex<Annotation> fAnnoIndex = aJCas.getAnnotationIndex(fAnnoType);
+			String featureName = "name";
+			Feature fAnnoName = fAnnoType.getFeatureByBaseName(featureName);
+			String id = "";
+//			String author = "";
+//			String title = "";
+			for (Annotation fAnno : fAnnoIndex) {
+				if (fAnno.getFeatureValueAsString(fAnnoName).equals("id")) {
+					id = fAnno.getCoveredText(); 
+				}
+//				else if (fAnno.getFeatureValueAsString(fAnnoName).equals("author")) {
+//					author = fAnno.getCoveredText(); 
+//				}
+//				if (fAnno.getFeatureValueAsString(fAnnoName).equals("title")) {
+//					title = fAnno.getCoveredText(); 
+//				}
 			}
-			docStart = docStart.replaceAll("[<\\?!/\\(\\)>\\.=*]+", "");
-			docStart = docStart.replaceAll("\\\\", "");
-			System.out.println("DocName: " + docStart);
+			//filename = id + "-" + author.substring(0,10).replaceAll("\\s+", "_") + "-" + title.substring(0,5).replaceAll("\\s+", "_");
+			filename += "-" + id;
+			System.out.println("fILE: " + filename);
 			
-			this.writeSamplesToFiles(aJCas, docStart);
-			this.writeSamplesToXMI(aJCas, docStart);
+//			Iterator<Token> toks = JCasUtil.iterator(aJCas, Token.class);
+//			String docStart = new String();
+//			int counter = 0;
+//			while (counter < 5 && toks.hasNext()) {
+//				docStart = docStart + toks.next().getCoveredText();
+//				counter++;
+//			}
+//			docStart = docStart.replaceAll("[<\\?!/\\(\\)>\\.=*]+", "");
+//			docStart = docStart.replaceAll("\\\\", "");
+//			System.out.println("DocName: " + docStart);
+
+			this.writeSamplesToFiles(aJCas, filename);
+			this.writeSamplesToXMI(aJCas, filename);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
-	
-	
 
-	
-
-	private void writeSamplesToFiles(JCas aJCas, String doc)
-			throws Exception {
+	private void writeSamplesToFiles(JCas aJCas, String doc) throws Exception {
 		Iterator<Sample> samples = JCasUtil.iterator(aJCas, Sample.class);
 		while (samples.hasNext()) {
 			Sample s = samples.next();
 
-			String filename = this.outputdir + File.separator + doc + "_"
-					+ s.getId() + ".txt";
+			String filename = this.outputdir + File.separator + doc + "_" + s.getId() + ".txt";
 			this.writeFile(filename, s.getCoveredText());
 		}
 	}
-	
-	
-	private void writeSamplesToXMI(JCas aJCas, String doc)
-			throws Exception {
-		//Iterator<Sample> samples = JCasUtil.iterator(aJCas, Sample.class);
-		
-	    // get all Annotations in the range of Sample
-		Map<Sample, Collection<Annotation>> samplesWithAnnos = JCasUtil.indexCovered(
-						aJCas, Sample.class, Annotation.class);
-		
-		for (Sample s : samplesWithAnnos.keySet()) {
-			//Sample s = samples.next();
 
-			String filename = this.outputdir + File.separator + "samp_" + doc + "_"
-					+ s.getId() + ".xmi";
-			
+	private void writeSamplesToXMI(JCas aJCas, String doc) throws Exception {
+		// get all Annotations in the range of Sample
+		Map<Sample, Collection<Annotation>> annosWithinSample = JCasUtil.indexCovered(aJCas, Sample.class,
+				Annotation.class);
+
+		for (Sample s : annosWithinSample.keySet()) {
+			String filename = this.outputdir + File.separator + doc + "_" + s.getId() + ".xmi";
 			// create TS
 			Collection<TypeSystemDescription> ts_coll = new HashSet<>();
 			TypeSystemDescription tsdSampler = TypeSystemDescriptionFactory
@@ -153,81 +163,75 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 					.createTypeSystemDescriptionFromPath("resources/generatedTypeSystem.xml");
 			ts_coll.add(tsd);
 			ts_coll.add(tsdSampler);
-
 			TypeSystemDescription mergedTypeSystems = null;
 			mergedTypeSystems = CasCreationUtils.mergeTypeSystems(ts_coll);
 
 			// initialize new CAS
-		    CAS newCas = CasCreationUtils.createCas(mergedTypeSystems,null,null);
-		    // set the text covered by Sample as text of the newCas
-		    newCas.setDocumentText(s.getCoveredText());
-		    
-		    int sampleStart = s.getBegin();
-		    int sampleEnd = s.getEnd();
-		    // get the annotations covered by this sample
-		    for (Annotation anno : samplesWithAnnos.get(s)) {
-		    	// copy each annotation to the new Cas
-		    	//newCas.addFsToIndexes(anno);
-		    	System.out.println("Copy Anno: " + anno.getType().getName());
-		        System.out.println("SampleStart: " + sampleStart + " SampleEnd: " + sampleEnd);
-		        System.out.println("AnnoStart: " + anno.getBegin() + " AnnoEnd: " + anno.getEnd());
-		    	Type newAnnoType = anno.getType();
-		    	int newAnnoStart = 0;
-		    	if (anno.getBegin() >= sampleStart) {
-		    		newAnnoStart = anno.getBegin() - sampleStart;
-		    	}
-		    	int newAnnoEnd = sampleEnd;
-		    	if (anno.getEnd() <= sampleEnd) {
-		    		newAnnoEnd = newAnnoStart + (anno.getEnd() - anno.getBegin());
-		    	}
-		    	System.out.println("NewCASLen: " + newCas.getDocumentText().length());
-		    	System.out.println("NewAnnoStart: " + newAnnoStart + " newAnnoEnd: " + newAnnoEnd);
-		    	AnnotationFS newAnno = newCas.createAnnotation(newAnnoType, newAnnoStart, newAnnoEnd);
-		    	try {
-		    	System.out.println("HERE");
-		    	newCas.addFsToIndexes(newAnno);
-		    	System.out.println("THERE");
-		    	}
-		    	catch (Exception e) {
-		    		System.out.println("adding failed for: " + anno.getType().getName());
-		    	}
-		    }
-		
-		    System.out.println("NEW ANNOTATIONS");
-		    for (AnnotationFS anno : newCas.getAnnotationIndex()) {
-		    	System.out.println("anno: " + anno.getType().getName());
-		    }
-		   
-			XmiCasSerializer.serialize(newCas, new FileOutputStream(new File(filename)));
+			CAS newCas = CasCreationUtils.createCas(mergedTypeSystems, null, null);
+			// set the text covered by Sample as text of the newCas
+			newCas.setDocumentText(s.getCoveredText());
+
+			int sampleStart = s.getBegin();
+			int sampleEnd = s.getEnd();
 			
-		}
-	}
-	
-	
-	private CAS copyAnno(String annoName, String newAnnoName, CAS mainCas, CAS mergeCas) {
-		Type annoType = mergeCas.getTypeSystem().getType(annoName);
-		AnnotationIndex<AnnotationFS> annoIndex = mergeCas.getAnnotationIndex(annoType);
+			// get the annotations covered by this Sample (gets only totally covered Annotations)
+			Set<Annotation> annosCovered = new HashSet<>(annosWithinSample.get(s));
+			// get the annotations covering the starting point (may be partial)
+			List<Annotation> annosStart = JCasUtil.selectCovering(aJCas, Annotation.class, sampleStart, sampleStart);
+			// get the annotations covering the end point (may be partial)
+			List<Annotation> annosEnd = JCasUtil.selectCovering(aJCas, Annotation.class, sampleEnd, sampleEnd);
+			// add to the set (duplicates will be ignored)
+			annosCovered.addAll(annosStart);
+			annosCovered.addAll(annosEnd);
+			
+			// Copy each annotation to the new Cas
+			for (Annotation anno : annosCovered) {
 
-		for (AnnotationFS anno : annoIndex) {
-			// System.out.println("Anno: " + anno.getCoveredText());
-
-			// copy this Anno to the mainCas, but change the Anno name to
-			// newAnnoName
-			Type newAnnoType = mainCas.getTypeSystem().getType(newAnnoName);
-			AnnotationFS newAnno = mainCas.createAnnotation(newAnnoType, anno.getBegin(), anno.getEnd());
-
-			// copy Features of anno to newAnno
-			for (Feature feat : annoType.getFeatures()) {
-				// only copy the features that are of the frame domain
-				if (feat.getDomain().equals(annoType)) {
-					newAnno.setFeatureValueFromString(feat, anno.getFeatureValueAsString(feat));
+				//System.out.println("Copy Anno: " + anno.getType().getName());
+				//System.out.println("SampleStart: " + sampleStart + " SampleEnd: " + sampleEnd);
+				//System.out.println("AnnoStart: " + anno.getBegin() + " AnnoEnd: " + anno.getEnd());
+			
+				String newAnnoName = anno.getType().getName();
+				
+				// translate the dkpro annotations to the rw typesystem
+				if (newAnnoName.equals("de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token")) {
+					newAnnoName = "de.idsma.rw.types.Token";
+				}
+				else if (newAnnoName.equals("de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")){
+					newAnnoName = "de.idsma.rw.types.Sentence";
+				}
+			    Type newAnnoType = newCas.getTypeSystem().getType(newAnnoName);
+			    
+			    // determine start and end point in the new Cas
+				int newAnnoStart = 0;
+				if (anno.getBegin() >= sampleStart) {
+					newAnnoStart = anno.getBegin() - sampleStart;
+				}
+				int newAnnoEnd = newCas.getDocumentText().length();
+				if (anno.getEnd() <= sampleEnd) {
+					newAnnoEnd = newAnnoStart + (anno.getEnd() - anno.getBegin());
+				}
+				// now try adding
+				try {
+					
+					AnnotationFS newAnno = newCas.createAnnotation(newAnnoType, newAnnoStart, newAnnoEnd);
+					newCas.addFsToIndexes(newAnno);
+					//System.out.println("Annotation added: " + newAnno.getType().getName());
+				} catch (Exception e) {
+					System.out.println("FAILED: " + anno.getType().getName());
 				}
 			}
-			// add the annotation zu the mainCas index
-			mainCas.addFsToIndexes(newAnno);
+
+//			System.out.println("NEW ANNOTATIONS");
+//			for (AnnotationFS anno : newCas.getAnnotationIndex()) {
+//				System.out.println("anno: " + anno.getType().getName());
+//			}
+
+			XmiCasSerializer.serialize(newCas, new FileOutputStream(new File(filename)));
+
 		}
-		return mainCas;
 	}
+
 
 	private void writeFile(String filename, String content) throws Exception {
 		System.out.println("filename: " + filename);
@@ -235,8 +239,7 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 		try {
 			File file = new File(filename);
 			file.getParentFile().mkdirs();
-			writer = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream(filename), "utf-8"));
+			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"));
 			writer.write(content);
 		} catch (Exception e) {
 			throw e;
@@ -250,9 +253,7 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 
 	}
 
-	private boolean getSample(JCas aJCas,
-			Map<Sentence, Collection<Token>> sentTokMap, 
-			List<Sentence> sentInBody,
+	private boolean getSample(JCas aJCas, Map<Sentence, Collection<Token>> sentTokMap, List<Sentence> sentInBody,
 			int sampleID) {
 		boolean success = false;
 
@@ -260,8 +261,7 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 		// appropriate length
 		// Token startTok = sentTokMap.get(startSent).iterator().next();
 
-		Map<Sentence, Collection<Sample>> sentSampMap = JCasUtil.indexCovering(
-				aJCas, Sentence.class, Sample.class);
+		Map<Sentence, Collection<Sample>> sentSampMap = JCasUtil.indexCovering(aJCas, Sentence.class, Sample.class);
 
 		Token startTok = null;
 		int tries = 0;
@@ -275,26 +275,23 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 
 		if (startTok != null) {
 
-			List<Token> tokSample = JCasUtil.selectFollowing(Token.class,
-					startTok, this.samplelen);
+			List<Token> tokSample = JCasUtil.selectFollowing(Token.class, startTok, this.samplelen);
 
 			if (tokSample.size() == this.samplelen) {
 				// determine endTok --> always expand the Anno to the next
 				// Sentence end
 				Token sampleTokEnd = tokSample.get(tokSample.size() - 1);
-				List<Sentence> coveringSents = JCasUtil.selectCovering(
-						Sentence.class, sampleTokEnd);
+				List<Sentence> coveringSents = JCasUtil.selectCovering(Sentence.class, sampleTokEnd);
 				Sentence endSent = coveringSents.get(0);
 				// only add annotation if the endSent is not covered by a
 				// SampleAnno either
-				System.out.println("Endsent not Sample? "
-						+ sentSampMap.get(endSent).isEmpty());
+				System.out.println("Endsent not Sample? " + sentSampMap.get(endSent).isEmpty());
 				if (sentSampMap.get(endSent).isEmpty()) {
-
 					// annotation only successfully added if it does not overlap
 					// with another sample
-					success = this.addAnnotation(aJCas, startTok.getBegin(),
-							coveringSents.get(0).getEnd(), sampleID);
+					// determine the actual number of tokens covered by the annotation
+					int toks = JCasUtil.selectCovered(aJCas, Token.class, startTok.getBegin(), coveringSents.get(0).getEnd()).size();
+					success = this.addAnnotation(aJCas, startTok.getBegin(), coveringSents.get(0).getEnd(), sampleID, toks);
 				}
 			}
 		}
@@ -302,10 +299,8 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 		return success;
 	}
 
-	private Token pickStartToken(JCas aJCas,
-			Map<Sentence, Collection<Token>> sentTokMap,
-			Map<Sentence, Collection<Sample>> sentSampMap,
-			List<Sentence> sentInBody) {
+	private Token pickStartToken(JCas aJCas, Map<Sentence, Collection<Token>> sentTokMap,
+			Map<Sentence, Collection<Sample>> sentSampMap, List<Sentence> sentInBody) {
 		Token startTok = null;
 		List<Sentence> sentList = new ArrayList<>(sentTokMap.keySet());
 		int index = this.randomGenerator.nextInt(sentList.size());
@@ -315,33 +310,27 @@ public class SamplerXmi extends JCasAnnotator_ImplBase {
 		// check whether sent is part of body
 		if (!sentInBody.contains(startSent)) {
 			System.out.println("Sent not in Body");
-		}
-		else {
+		} else {
 			System.out.println("Sent is in Body: " + startSent.getCoveredText());
-		System.out.println("Startsent not Sample? "
-				+ sentSampMap.get(startSent).isEmpty());
-		// check whether the startSent is not covered by a Sample Annotation
-		if (sentSampMap.get(startSent).isEmpty()) {
-			startTok = sentTokMap.get(startSent).iterator().next();
-		}
+			System.out.println("Startsent not Sample? " + sentSampMap.get(startSent).isEmpty());
+			// check whether the startSent is not covered by a Sample Annotation
+			if (sentSampMap.get(startSent).isEmpty()) {
+				startTok = sentTokMap.get(startSent).iterator().next();
+			}
 		}
 		return startTok;
 	}
 
-	private boolean addAnnotation(JCas aJCas, int start, int end, int id) {
+	private boolean addAnnotation(JCas aJCas, int start, int end, int id, int toks) {
 		boolean success = false;
-		// generate a new annotation of type Indirect
+		// generate a new annotation of type Sample
 		Sample s = new Sample(aJCas, start, end);
+		// add feature id (automatic method)
 		s.setId(id);
+		// add feature tok
+		s.setTok(toks);
 		s.addToIndexes(aJCas);
 		success = true;
-		//
-		// Map<Sample, Collection<Sample>> sampleMap = JCasUtil.indexCovered(
-		// aJCas, Sample.class, Sample.class);
-		// if (!sampleMap.get(s).isEmpty()) {
-		// s.removeFromIndexes();
-		// success = false;
-		// }
 		return success;
 	}
 

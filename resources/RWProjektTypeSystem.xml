@@ -22,5 +22,21 @@
         </featureDescription>
       </features>
     </typeDescription>
+ 
+  <typeDescription>
+      <name>de.idsma.rw.types.Token</name>
+      <description>A Token this text</description>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+    <features>
+      </features>
+    </typeDescription>
+    
+     <typeDescription>
+      <name>de.idsma.rw.types.Sentence</name>
+      <description>A Token this text</description>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+    <features>
+      </features>
+    </typeDescription>
   </types>
 </typeSystemDescription>
